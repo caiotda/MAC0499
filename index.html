@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="PT-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAC0499</title>
+    <style>
+
+    .flexCentered {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .pdfContainer {
+        width: 90vw;
+        height: 75vh;
+        margin: 2rem 0
+    }
+
+    .pdfContent {
+        height: 100%;
+        width: 50%;
+    }
+
+    body {
+        box-sizing: border-box;
+        margin: 2rem 5rem;
+    }
+
+    header {
+        width: 100%;
+        height: 20%;
+        display: flex;
+        flex-direction: column;
+    }
+    </style>
+</head>
+<body>
+    <header class="flexCentered">
+        <h1>MAC0499</h1>
+        <h2>Proposta de TCC</h2>
+    </header>
+    <hr />
+    <strong>Informações gerais</strong>
+    <ul>
+        <li>Aluno: Caio Túlio de Deus Andrade</li>
+        <li>Orientador: Marcelo Finger</li>
+        <li>Áreas relacionadas ao trabalho: 
+            <ol>
+                <li>NLP</li>
+                <li>NLU</li>
+                <li>NER</li>
+                <li>Modelos de linguagem</li>
+                <li>Transformadores</li>
+                <li>BERT</li>
+                <li>Aprendizado ativo</li>
+                <li>Aprendizado supervisionado</li>
+                <li>Aprendizado profundo</li>
+        </li>
+    </ul>
+    <section class="pdfContainer flexCentered">
+        <embed class="pdfContent" src="./proposta.pdf" width="50%" height="50%" 
+            type="application/pdf">
+    </section>
+    <article>
+        <p>
+            <strong>Resumo</strong>: O TCC abordará a implementação de um etiquetador
+            de termos sexistas em textos judiciais em cima do modelo BERT. O Aprendizado
+            do modelo pré-treinado será refinado usando textos de processos judiciais
+            disponibilizados em parceria com o Tribunal de Justiça do Estado de São Paulo.
+        </p>
+        <p>
+            Estes textos serão lidos e termos sexistas em falas dos entes jurídicos
+            serão destacados por uma equipe de advogadas. O dado, agora etiquetado,
+            será alimentado ao modelo de NLP e, com isso, esperamos obter um etiquetador
+            capaz de identificar tais vieses.
+        </p>
+        <p>
+            Esse projeto faz parte de uma pesquisa em andamento no grupo de pesquisa
+            LawGorithm do IME USP, em parceria com a faculdade de direito da PUC-SP.
+        </p>
+        </p>
+
+    </article>
+    <hr />
+
+</body>
+</html>
