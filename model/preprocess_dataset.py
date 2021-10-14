@@ -5,8 +5,7 @@ from transformers import BertTokenizer
 from datasets import load_dataset
 from torch.utils.data import Dataset, DataLoader
 
-CHECKPOINT = 'neuralmind/bert-base-portuguese-cased'
-TOKENIZER = BertTokenizer.from_pretrained(CHECKPOINT)
+
 
 
 def extend_labels(labels, new_tokens):
@@ -45,14 +44,15 @@ class NERDataset(Dataset):
     implements a pytorch Dataset. As such, it must implement
     3 methods: __len__, __getitem__ and _init__.
     """
+    CHECKPOINT = 'neuralmind/bert-base-portuguese-cased'
+    tokenizer = BertTokenizer.from_pretrained(CHECKPOINT)
 
-    def __init__(self, data, tokenizer, max_len):
+    def __init__(self, data, max_len):
         """
         Receives a Dataset object, a Transformers tokenizer
         and the max_len that each entry must have.
         """
         self.data = data
-        self.tokenizer = tokenizer
         self.max_len = max_len
     
     def __len__(self):
@@ -112,7 +112,7 @@ class NERDataset(Dataset):
 def main():
     data = "lener_br"
     dataset = load_dataset(data)
-    teste = NERDataset(dataset['train'], tokenizer=TOKENIZER, max_len=180)
+    teste = NERDataset(dataset['train'], max_len=180)
 
     print(teste[0])
 
