@@ -9,8 +9,33 @@ CHECKPOINT = 'neuralmind/bert-base-portuguese-cased'
 TOKENIZER = BertTokenizer.from_pretrained(CHECKPOINT)
 
 
-def extend_labels(labels):
-    return labels
+def extend_labels(labels, new_tokens):
+    """
+    Given a retokenized input `new_tokens`, extends the
+    labels every time the corresponding word was tokenized into
+    subwords. this function simply extends the first tag.
+    For example:
+
+    ["Calçadão", "de", "Osasco"] <> [B-LOCAL, I-LOCAL, I-LOCAL]
+    \/ (Retokenization)
+    ["cal", "##ça"", "##dão", "de", "Osa", "##s", "##co"]
+    <>
+    [B-LOCAL, X, X, I-LOCAL, I-LOCAL, X, X]
+
+    Bert, when performing NER tasks, ignores the tag attributed to a 
+    subword, so we ignore subword labels so that metrics are not changed.
+    """
+    label_idx = 0
+    new_labels = []
+    relevant_tokens = [token for token in new_tokens if token != '[PAD]']
+    for token in relevant_tokens:
+        if ("##" in token):
+            new_labels.append(-1)
+        else:
+            new_labels.append(labels[label_idx])
+            label_idx += 1
+            
+    return new_labels
 
 def retokenize(entry):
     """ []string -> []string
@@ -26,11 +51,10 @@ def retokenize(entry):
     """
 
     sentence = " ".join(entry)
-    print(f"Comprimento da sentença de entrada: {len(sentence)}")
     return TOKENIZER.encode_plus(sentence,
                                 max_length=256,
                                 padding='max_length', # Trocar isso pelo mais longo do batch. Faz mais sentido pra treino em GPU!
-                                add_special_tokens=True,
+                                add_special_tokens=False,
                                 return_attention_mask=True,
                                 return_tensors='pt')
 
@@ -68,20 +92,17 @@ class NERDataset(Dataset):
 
         input_tokens = self.data[idx]['tokens']
         labels = self.data[idx]['ner_tags']
-        subword_tokenized = retokenize(input_tokens)
+        encoded_input = retokenize(input_tokens)
 
-        extended_labels = extend_labels(labels)
-        """ try:
-            assert len(extended_labels) == len(subword_tokenized['input_ids'])
-        except AssertionError:
-            print("The extended label should be the same length of retokenized input") """
+        input_ids = encoded_input['input_ids'].flatten()
+        decoded_input = TOKENIZER.convert_ids_to_tokens(input_ids)
+        extended_labels = extend_labels(labels, decoded_input)
 
-        print('opa')
         return {
             "id": idx,
-            "input_text": input_sentence,
-            "input_ids": subword_tokenized['input_ids'].flatten(),
-            "attention_mask": subword_tokenized['attention_mask'].flatten(),
+            "input_text": " ".join(input_tokens),
+            "input_ids": input_ids,
+            "attention_mask": encoded_input['attention_mask'].flatten(),
             "targets": torch.tensor(extended_labels, dtype=torch.long)
         }
 
@@ -89,6 +110,8 @@ class NERDataset(Dataset):
 def main():
     data = "lener_br"
     dataset = load_dataset(data)
-    teste = NERDataset(dataset['train'])
+    teste = NERDataset(dataset['train'], tokenizer=TOKENIZER, max_len=180)
 
     print(teste[0])
+
+main()
