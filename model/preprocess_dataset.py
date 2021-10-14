@@ -37,26 +37,6 @@ def extend_labels(labels, new_tokens):
             
     return new_labels
 
-def retokenize(entry):
-    """ []string -> []string
-    GIVEN an array of strings
-    RETURNS an array of strings
-
-    Receives an array of strings that represents
-    a sentence that was tokenized using whitespaces.
-    The function then joins the words into a sentence, then
-    performs subword tokenization using BERTimbau's tokenizer.
-
-    This is done to avoid occurence of OOV tokens.
-    """
-
-    sentence = " ".join(entry)
-    return TOKENIZER.encode_plus(sentence,
-                                max_length=256,
-                                padding='max_length', # Trocar isso pelo mais longo do batch. Faz mais sentido pra treino em GPU!
-                                add_special_tokens=False,
-                                return_attention_mask=True,
-                                return_tensors='pt')
 
 
 
@@ -92,10 +72,10 @@ class NERDataset(Dataset):
 
         input_tokens = self.data[idx]['tokens']
         labels = self.data[idx]['ner_tags']
-        encoded_input = retokenize(input_tokens)
+        encoded_input = self._retokenize(input_tokens)
 
         input_ids = encoded_input['input_ids'].flatten()
-        decoded_input = TOKENIZER.convert_ids_to_tokens(input_ids)
+        decoded_input = self.tokenizer.convert_ids_to_tokens(input_ids)
         extended_labels = extend_labels(labels, decoded_input)
 
         return {
@@ -105,6 +85,28 @@ class NERDataset(Dataset):
             "attention_mask": encoded_input['attention_mask'].flatten(),
             "targets": torch.tensor(extended_labels, dtype=torch.long)
         }
+
+    
+    def _retokenize(self, entry):
+        """ []string -> []string
+        GIVEN an array of strings
+        RETURNS an array of strings
+
+        Receives an array of strings that represents
+        a sentence that was tokenized using whitespaces.
+        The function then joins the words into a sentence, then
+        performs subword tokenization using BERTimbau's tokenizer.
+
+        This is done to avoid occurence of OOV tokens.
+        """
+
+        sentence = " ".join(entry)
+        return self.tokenizer.encode_plus(sentence,
+                                    max_length=self.max_len,
+                                    padding='max_length', # Trocar isso pelo mais longo do batch. Faz mais sentido pra treino em GPU!
+                                    add_special_tokens=False,
+                                    return_attention_mask=True,
+                                    return_tensors='pt')
 
 
 def main():
