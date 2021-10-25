@@ -12,7 +12,6 @@ class NERDataset(Dataset):
     """
     CHECKPOINT = 'neuralmind/bert-base-portuguese-cased'
     tokenizer = BertTokenizer.from_pretrained(CHECKPOINT)
-
     def __init__(self, data, max_len):
         """
         Receives a Dataset object, a Transformers tokenizer
@@ -51,7 +50,6 @@ class NERDataset(Dataset):
 
         return {
             "id": idx,
-            "input_text": " ".join(input_tokens),
             "input_ids": input_ids,
             "attention_mask": encoded_input['attention_mask'].flatten(),
             "targets": torch.tensor(labels, dtype=torch.long)
