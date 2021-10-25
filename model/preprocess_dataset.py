@@ -72,6 +72,7 @@ class NERDataset(Dataset):
         sentence = " ".join(entry)
         return self.tokenizer(sentence,
                                     max_length=self.max_len,
+                                    truncation=True,
                                     padding='max_length', # Trocar isso pelo mais longo do batch. Faz mais sentido pra treino em GPU!
                                     add_special_tokens=False,
                                     return_attention_mask=True,
