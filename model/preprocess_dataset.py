@@ -5,40 +5,6 @@ from transformers import BertTokenizer
 from datasets import load_dataset
 from torch.utils.data import Dataset, DataLoader
 
-
-
-
-def extend_labels(labels, new_tokens):
-    """
-    Given a retokenized input `new_tokens`, extends the
-    labels every time the corresponding word was tokenized into
-    subwords. this function simply extends the first tag.
-    For example:
-
-    ["Calçadão", "de", "Osasco"] <> [B-LOCAL, I-LOCAL, I-LOCAL]
-    \/ (Retokenization)
-    ["cal", "##ça"", "##dão", "de", "Osa", "##s", "##co"]
-    <>
-    [B-LOCAL, X, X, I-LOCAL, I-LOCAL, X, X]
-
-    Bert, when performing NER tasks, ignores the tag attributed to a 
-    subword, so we ignore subword labels so that metrics are not changed.
-    """
-    label_idx = 0
-    new_labels = []
-    relevant_tokens = [token for token in new_tokens if token != '[PAD]']
-    for token in relevant_tokens:
-        if ("##" in token):
-            new_labels.append(-1)
-        else:
-            new_labels.append(labels[label_idx])
-            label_idx += 1
-            
-    return new_labels
-
-
-
-
 class NERDataset(Dataset):
     """
     implements a pytorch Dataset. As such, it must implement
@@ -76,14 +42,19 @@ class NERDataset(Dataset):
 
         input_ids = encoded_input['input_ids'].flatten()
         decoded_input = self.tokenizer.convert_ids_to_tokens(input_ids)
-        extended_labels = extend_labels(labels, decoded_input)
+
+        # In order to enforce all batch entries with same shape,
+        # we artifically pad the labels to be of same length,
+        # regardless of the input length.
+        labels.extend([-1] * self.max_len)
+        labels = labels[:self.max_len]
 
         return {
             "id": idx,
             "input_text": " ".join(input_tokens),
             "input_ids": input_ids,
             "attention_mask": encoded_input['attention_mask'].flatten(),
-            "targets": torch.tensor(extended_labels, dtype=torch.long)
+            "targets": torch.tensor(labels, dtype=torch.long)
         }
 
     
