@@ -46,12 +46,15 @@ class NERDataset(Dataset):
         labels.extend([-1] * self.max_len)
         labels = labels[:self.max_len]
         targets = torch.tensor(labels, dtype=torch.long)
+        
         try:
-            assert len(input_ids) == len(attention_mask) == len(targets)
+            assert len(input_ids.flatten()) == len(attention_mask.flatten()) == len(targets.flatten())
         except:
+            print('Size input_ids: ', len(input_ids.flatten()))
+            print('Size attention_mask: ', len(attention_mask.flatten()))
+            print('Size targets: ', len(targets.flatten()))
             raise Exception("Length Mismatch in Dataset object.Check input_ids,\
                 attention_mask or targets length.") 
-
         return {
             "id": idx,
             "input_ids": input_ids,
