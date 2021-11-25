@@ -10,15 +10,14 @@ class NERDataset(Dataset):
     implements a pytorch Dataset. As such, it must implement
     3 methods: __len__, __getitem__ and _init__.
     """
-    CHECKPOINT = 'neuralmind/bert-base-portuguese-cased'
-    tokenizer = BertTokenizer.from_pretrained(CHECKPOINT)
-    def __init__(self, data, max_len):
+    def __init__(self, data, max_len, tokenizer):
         """
         Receives a Dataset object, a Transformers tokenizer
         and the max_len that each entry must have.
         """
         self.data = data
         self.max_len = max_len
+        self.tokenizer = tokenizer
     
     def __len__(self):
         """
@@ -80,11 +79,13 @@ class NERDataset(Dataset):
 
 
 def main():
+    CHECKPOINT = 'neuralmind/bert-base-portuguese-cased'
+    tokenizer = BertTokenizer.from_pretrained(CHECKPOINT)
     data = "lener_br"
     dataset = load_dataset(data)
-    teste = NERDataset(dataset['train'], max_len=180)
+    ds = NERDataset(dataset['train'], max_len=180, tokenizer=tokenizer)
 
-    print(teste[0])
+    print(ds[0])
 
 if __name__ == "__main__":
     main()
