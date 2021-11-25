@@ -37,11 +37,9 @@ class NERDataset(Dataset):
         input_tokens = self.data[idx]['tokens']
         labels = self.data[idx]['ner_tags']
         encoded_input = self._retokenize(input_tokens)
-        attention_mask = encoded_input['attention_mask'].flatten()
+        attention_mask = encoded_input['attention_mask']
 
-        input_ids = encoded_input['input_ids'].flatten()
-        decoded_input = self.tokenizer.convert_ids_to_tokens(input_ids)
-
+        input_ids = encoded_input['input_ids']
         # In order to enforce all batch entries with same shape,
         # we artifically pad the labels to be of same length,
         # regardless of the input length.
