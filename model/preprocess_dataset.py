@@ -37,6 +37,7 @@ class NERDataset(Dataset):
         input_tokens = self.data[idx]['tokens']
         labels = self.data[idx]['ner_tags']
         encoded_input = self._retokenize(input_tokens)
+        attention_mask = encoded_input['attention_mask'].flatten()
 
         input_ids = encoded_input['input_ids'].flatten()
         decoded_input = self.tokenizer.convert_ids_to_tokens(input_ids)
@@ -46,12 +47,18 @@ class NERDataset(Dataset):
         # regardless of the input length.
         labels.extend([-1] * self.max_len)
         labels = labels[:self.max_len]
+        targets = torch.tensor(labels, dtype=torch.long)
+        try:
+            assert len(input_ids) == len(attention_mask) == len(targets)
+        except:
+            raise Exception("Length Mismatch in Dataset object.Check input_ids,\
+                attention_mask or targets length.") 
 
         return {
             "id": idx,
             "input_ids": input_ids,
-            "attention_mask": encoded_input['attention_mask'].flatten(),
-            "targets": torch.tensor(labels, dtype=torch.long)
+            "attention_mask": attention_mask,
+            "targets": targets
         }
 
     
