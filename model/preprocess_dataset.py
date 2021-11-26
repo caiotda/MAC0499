@@ -43,7 +43,7 @@ class NERDataset(Dataset):
         # In order to enforce all batch entries with same shape,
         # we artifically pad the labels to be of same length,
         # regardless of the input length.
-        labels.extend([-1] * self.max_len)
+        labels.extend([0] * self.max_len)
         labels = labels[:self.max_len]
         targets = torch.tensor(labels, dtype=torch.long)
         
