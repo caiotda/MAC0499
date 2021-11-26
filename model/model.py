@@ -8,8 +8,8 @@ class NERClassifier(nn.Module):
         super(NERClassifier, self).__init__()
         self.bert = BertForTokenClassification.from_pretrained(checkpoint, num_labels=n_labels)
 
-    def forward(self, ids, mask,):
-        return self.bert(ids, mask)
+    def forward(self, ids, mask, labels=None):
+        return self.bert(ids, mask, labels=labels)
 
 def main():
     t = [  192,  7463,  8427, 22301,   131, 12127,  9008, 22301, 22402, 16484,
