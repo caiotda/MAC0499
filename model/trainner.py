@@ -11,29 +11,43 @@ def create_data_loader(df, max_len, batch_size, num_workers):
 
 class Trainner:
 
+    # TODO: batch_size como parametro do construtor?
+    # Uma alternativa é passar um dicionario com alguns parametros
+    # de treino também.
     def __init__(self, device, dataLoader, model, optimizer):
         self.model = model.to(device)
         self.dataLoader = dataLoader
         self.optimizer = optimizer
-        self.epochs = epochs
-        self.total_steps = len(dataLoader) * epochs
+        self.dev = device
+        #self.epochs = epochs
+        #self.total_steps = len(dataLoader) * epochs
 
     def _train_epoch(self):
-        model = self.model.train()
+        self.model.train() # set model for training mode
 
         losses = []
         correct = 0
 
+        correct_predictions = 0
         for sample in self.dataLoader:
-            input_tensor = sample["input_ids"]
-            att_mask = sample["attention_mask"]
-            target = sample["targets"]
+            input_tensor = sample["input_ids"].to(self.dev, dtype = torch.long)
+            att_mask = sample["attention_mask"].to(self.dev, dtype = torch.long)
+            target = sample["targets"].to(self.dev, dtype = torch.long)
 
-            loss, output = model(ids=input, mask=att_mask, labels=target)
+            out = self.model(input_tensor, att_mask, labels=target)
+            preds = out['logits']
+            loss = out['loss']
+            #correct_predictions += torch.sum(preds == target) TODO: ainda não posso usar isso! preciso antes converter o tensor pra um vetor de classificações.
+            # TODO: tem algo bem parecido no notebook de cliente
             losses.append(loss)
-        
-        return np.mean(losses)
+            loss.backward()
+            self.optimizer.step()
+        self.optimizer.zero_grad()
 
+        return losses, np.mean(losses)
+
+    def train(self):
+        return self._train_epoch() # Eventualmente vou iterar pelas epochs
 def main():
 
     BATCH_SIZE = 16
@@ -49,6 +63,7 @@ def main():
     test_data_loader = create_data_loader(df['test'], MAX_LEN, BATCH_SIZE, num_workers=4)
     validation_data_loader = create_data_loader(df['validation'], MAX_LEN, BATCH_SIZE, num_workers=4)
 
+    dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if __name__ == "__main__":
     main()
