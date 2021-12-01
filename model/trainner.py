@@ -29,6 +29,7 @@ class Trainner:
         correct = 0
 
         correct_predictions = 0
+        i = 0
         for sample in self.dataLoader:
             input_tensor = sample["input_ids"].squeeze().to(self.dev, dtype = torch.long)
             att_mask = sample["attention_mask"].to(self.dev, dtype = torch.long)
@@ -37,11 +38,16 @@ class Trainner:
             out = self.model(input_tensor, att_mask, labels=target)
             preds = out['logits']
             loss = out['loss']
+            print(loss)
             #correct_predictions += torch.sum(preds == target) TODO: ainda não posso usar isso! preciso antes converter o tensor pra um vetor de classificações.
             # TODO: tem algo bem parecido no notebook de cliente
-            losses.append(loss)
+            losses.append(loss.item())
             loss.backward()
             self.optimizer.step()
+            i += 1
+            if (i == 10):
+                print("Bati o limite, chega!")
+                break
         self.optimizer.zero_grad()
 
         return losses, np.mean(losses)
