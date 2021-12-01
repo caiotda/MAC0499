@@ -2,8 +2,22 @@ import torch
 import transformers
 
 from transformers import BertTokenizer
-from datasets import load_dataset
+from datasets import load_dataset, DatasetDict
 from torch.utils.data import Dataset, DataLoader
+
+
+def remove_empty_entries(data):
+    """
+    Given a Dataset from datasets library, removes any
+    entry that contains no text
+    """
+    
+    remover = lambda entry: len(entry['tokens']) > 0
+    train = data['train'].filter(remover)
+    validation = data['validation'].filter(remover)
+    test = data['test'].filter(remover)
+    
+    return DatasetDict({'train': train, 'validation': validation, 'test': test})
 
 class NERDataset(Dataset):
     """
