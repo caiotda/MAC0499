@@ -30,7 +30,7 @@ class Trainner:
 
         correct_predictions = 0
         for sample in self.dataLoader:
-            input_tensor = sample["input_ids"].to(self.dev, dtype = torch.long)
+            input_tensor = sample["input_ids"].squeeze().to(self.dev, dtype = torch.long)
             att_mask = sample["attention_mask"].to(self.dev, dtype = torch.long)
             target = sample["targets"].to(self.dev, dtype = torch.long)
 
