@@ -3,6 +3,8 @@ import torch
 import torch
 from torch.nn import Sigmoid
 
+def extract_max(sentence):
+    return [torch.argmax(word).item() for word in sentence]
 
 def preds_to_label_idx(logits):
     s = Sigmoid()
