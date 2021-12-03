@@ -16,11 +16,12 @@ class Trainner:
     # TODO: batch_size como parametro do construtor?
     # Uma alternativa é passar um dicionario com alguns parametros
     # de treino também.
-    def __init__(self, device, dataLoader, model, optimizer):
+    def __init__(self, device, dataLoader, model, optimizer, max_len):
         self.model = model.to(device)
         self.dataLoader = dataLoader
         self.optimizer = optimizer
         self.dev = device
+        self.batch_len = max_len
         #self.epochs = epochs
         #self.total_steps = len(dataLoader) * epochs
 
