@@ -2,6 +2,8 @@ from preprocess_dataset import NERDataset
 from torch.utils.data import DataLoader
 from datasets import load_dataset
 
+from utils import batch_to_labels
+
 import torch
 import numpy as np
 
@@ -36,11 +38,14 @@ class Trainner:
             target = sample["targets"].to(self.dev, dtype = torch.long)
 
             out = self.model(input_tensor, att_mask, labels=target)
-            preds = out['logits']
+            logits = out['logits']
             loss = out['loss']
+            
             print(loss)
-            #correct_predictions += torch.sum(preds == target) TODO: ainda não posso usar isso! preciso antes converter o tensor pra um vetor de classificações.
-            # TODO: tem algo bem parecido no notebook de cliente
+            preds = batch_to_labels(logits)
+            preds = preds.to(self.dev)
+
+            correct_predictions += torch.sum(preds == target).item()
             losses.append(loss.item())
             loss.backward()
             self.optimizer.step()
@@ -49,8 +54,8 @@ class Trainner:
                 print("Bati o limite, chega!")
                 break
         self.optimizer.zero_grad()
-
-        return losses, np.mean(losses)
+        acc = correct_predictions / (len(self.dataLoader) * self.batch_len )
+        return losses, acc
 
     def train(self):
         return self._train_epoch() # Eventualmente vou iterar pelas epochs
