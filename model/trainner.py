@@ -16,12 +16,13 @@ class Trainner:
     # TODO: batch_size como parametro do construtor?
     # Uma alternativa é passar um dicionario com alguns parametros
     # de treino também.
-    def __init__(self, device, dataLoader, model, optimizer, max_len):
+    def __init__(self, device, dataLoader, model, optimizer, num_examples, max_len):
         self.model = model.to(device)
         self.dataLoader = dataLoader
         self.optimizer = optimizer
         self.dev = device
         self.batch_len = max_len
+        self.num_examples = num_examples
         #self.epochs = epochs
         #self.total_steps = len(dataLoader) * epochs
 
@@ -29,11 +30,11 @@ class Trainner:
         self.model.train() # set model for training mode
 
         losses = []
-        correct = 0
 
         correct_predictions = 0
-        i = 0
-        for sample in self.dataLoader:
+        
+        for idx, sample in enumerate(self.dataLoader):
+
             input_tensor = sample["input_ids"].squeeze().to(self.dev, dtype = torch.long)
             att_mask = sample["attention_mask"].to(self.dev, dtype = torch.long)
             target = sample["targets"].to(self.dev, dtype = torch.long)
@@ -42,7 +43,6 @@ class Trainner:
             logits = out['logits']
             loss = out['loss']
             
-            print(loss)
             preds = batch_to_labels(logits)
             preds = preds.to(self.dev)
 
@@ -50,12 +50,12 @@ class Trainner:
             losses.append(loss.item())
             loss.backward()
             self.optimizer.step()
-            i += 1
-            if (i == 10):
-                print("Bati o limite, chega!")
-                break
+            if (idx % 100 == 0):
+                acc = correct_predictions / (self.num_examples * self.batch_len )
+                acc = "{:.4f}".format(acc*100)
+                prog = "{:.2f}".format(100*idx/len(self.dataLoader))
+                print(f"Iteração {idx} -------- Acuracia: {acc}%------- Loss: {loss} ------ Progresso: {prog}%.")
         self.optimizer.zero_grad()
-        acc = correct_predictions / (len(self.dataLoader) * self.batch_len )
         return losses, acc
 
     def train(self):
