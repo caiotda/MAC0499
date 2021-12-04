@@ -33,7 +33,10 @@ class Trainner:
         losses = []
 
         correct_predictions = 0
-        
+        temp_accuracy = 0
+
+        relevant_data = temp_relevant_data = 0
+        debug_ammount = 100
         for idx, sample in enumerate(self.dataLoader):
 
             input_tensor = sample["input_ids"].squeeze().to(self.dev, dtype = torch.long)
@@ -41,23 +44,52 @@ class Trainner:
             target = sample["targets"].to(self.dev, dtype = torch.long)
 
             out = self.model(input_tensor, att_mask, labels=target)
-            logits = out['logits']
+            #logits = out['logits']
             loss = out['loss']
-            
-            preds = batch_to_labels(logits)
-            preds = preds.to(self.dev)
 
-            correct_predictions += torch.sum(preds == target).item()
+            # Creates boolean vector for every relevant value
+            #active_accuracy = target.view(-1) != -100
+            #flat_targets = target.view(-1)
+            #flat_logits = logits.view(-1)
+
+            ## Selects the relevant labels
+            #relevant_labels = torch.masked_select(flat_targets, active_accuracy)
+            #relevant_logits = torch.masked_select(flat_logits, active_accuracy)
+            
+
+            #relevant_data += len(relevant_logits)
+            #temp_relevant_data += len(relevant_logits)
+
+            #preds = batch_to_labels(relevant_logits)
+            #preds = preds.to(self.dev)
+
+            #correct_predictions += torch.sum(preds == relevant_labels).item()
+            #temp_accuracy += correct_predictions
+
             losses.append(loss.item())
+            
+            # Gradient clipping
+            torch.nn.utils.clip_grad_norm_(
+               parameters=self.model.parameters(), max_norm=10
+            )
+
+
+            # Backward pass
+            self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-            if (idx % 100 == 0):
-                acc = correct_predictions / (self.num_examples * self.batch_len )
-                acc = "{:.4f}".format(acc*100)
+
+            # We print the results every 100 mini batches
+            if (idx % debug_ammount == 0):
+                #temp_accuracy /= temp_relevant_data
+                #temp_relevant_data = 0
+
+                #acc = correct_predictions / (self.num_examples * self.batch_len )
+                #acc = "{:.4f}".format(temp_accuracy*100)
                 prog = "{:.2f}".format(100*idx/len(self.dataLoader))
-                print(f"Iteração {idx} -------- Acuracia: {acc}%------- Loss: {loss} ------ Progresso: {prog}%.")
-        self.optimizer.zero_grad()
-        return losses, acc
+                #print(f"Iteração {idx} -------- Acuracia nos ultimos {debug_ammount} exemplos: {acc}%------- Loss: {loss} ------ Progresso: {prog}%.")
+                print(f"Iteração {idx} -------- Loss: {loss} ------ Progresso: {prog}%.")
+        return losses, 0
 
     def train(self):
         loss_total = []
