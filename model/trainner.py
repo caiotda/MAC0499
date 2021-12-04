@@ -16,17 +16,18 @@ class Trainner:
     # TODO: batch_size como parametro do construtor?
     # Uma alternativa é passar um dicionario com alguns parametros
     # de treino também.
-    def __init__(self, device, dataLoader, model, optimizer, num_examples, max_len):
+    def __init__(self, device, dataLoader, model, optimizer, num_examples, max_len, num_epochs):
         self.model = model.to(device)
         self.dataLoader = dataLoader
         self.optimizer = optimizer
         self.dev = device
         self.batch_len = max_len
         self.num_examples = num_examples
-        #self.epochs = epochs
+        self.epochs = num_epochs
         #self.total_steps = len(dataLoader) * epochs
 
     def _train_epoch(self):
+        print(f"Treinando em {self.dev}")
         self.model.train() # set model for training mode
 
         losses = []
@@ -59,7 +60,14 @@ class Trainner:
         return losses, acc
 
     def train(self):
-        return self._train_epoch() # Eventualmente vou iterar pelas epochs
+        loss_total = []
+        for idx in range(self.epochs):
+            print(f"----------Começando treino da epoch nº {idx+1}")
+            losses, acc = self._train_epoch() # Eventualmente vou iterar pelas epochs
+            print(f"-------Fim da epoch nº {idx+1}. Loss media da epoch: {np.mean(losses)}")
+            loss_total.append(losses)
+        print(f"FIM DO TREINO! Loss media ao fim de {idx+1} epochs: {np.mean(loss_total)}")
+        return loss_total, acc
 def main():
 
     BATCH_SIZE = 16
