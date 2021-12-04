@@ -68,7 +68,8 @@ class NERDataset(Dataset):
         # We want to ignore completely subword tokens and padding tokens when 
         # calculating the model loss. PyTorch does so by using a special token
         # -100 in input. We'll create an array of MAX_LEN filled with -100 and
-        # only fill the value of relevant labels (That is, mapping[0] != mapping[1].)
+        # only fill the value of relevant labels (That is, tokens that does not
+        # starts with ## or is a special token.)
         
         i = 0
         encoded_labels = np.ones(self.max_len, dtype=int) * -100
