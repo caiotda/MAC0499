@@ -5,6 +5,8 @@ from transformers import BertTokenizer
 from datasets import load_dataset, DatasetDict
 from torch.utils.data import Dataset, DataLoader
 
+import numpy as np
+
 
 def remove_empty_entries(data):
     """
@@ -47,19 +49,37 @@ class NERDataset(Dataset):
         generally expand the size of the sentence. Therefore, we also expand
         the label to each item to reflect this change.
         """
-
+        
+        special_tokens = ['[CLS]', '[SEP]', '[MASK]', '[PAD]']
+        
         input_tokens = self.data[idx]['tokens']
         labels = self.data[idx]['ner_tags']
         encoded_input = self._retokenize(input_tokens)
         attention_mask = encoded_input['attention_mask']
-
-        input_ids = encoded_input['input_ids']
+    
+    
         # In order to enforce all batch entries with same shape,
         # we artifically pad the labels to be of same length,
         # regardless of the input length.
         labels.extend([0] * self.max_len)
         labels = labels[:self.max_len]
-        targets = torch.tensor(labels, dtype=torch.long)
+
+        input_ids = encoded_input['input_ids']
+        # We want to ignore completely subword tokens and padding tokens when 
+        # calculating the model loss. PyTorch does so by using a special token
+        # -100 in input. We'll create an array of MAX_LEN filled with -100 and
+        # only fill the value of relevant labels (That is, mapping[0] != mapping[1].)
+        
+        i = 0
+        encoded_labels = np.ones(self.max_len, dtype=int) * -100
+        for indx, input_id in enumerate(input_ids.squeeze()):
+            token = self.tokenizer.convert_ids_to_tokens(input_id.item())
+            # O primeiro cara checa se é uma extensão. o segundo checa se é um token especial
+            if not token.startswith('##') and not token in special_tokens:
+                encoded_labels[indx] = labels[i]
+                i += 1
+        
+        targets = torch.tensor(encoded_labels, dtype=torch.long)
         
         try:
             assert len(input_ids.flatten()) == len(attention_mask.flatten()) == len(targets.flatten())
@@ -94,7 +114,7 @@ class NERDataset(Dataset):
         return self.tokenizer(sentence,
                                     max_length=self.max_len,
                                     truncation=True,
-                                    padding='max_length', # Trocar isso pelo mais longo do batch. Faz mais sentido pra treino em GPU!
+                                    padding='max_length',
                                     add_special_tokens=False,
                                     return_attention_mask=True,
                                     return_tensors='pt')
