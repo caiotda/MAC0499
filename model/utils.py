@@ -18,4 +18,4 @@ def preds_to_label_idx(logits):
     return preds
 
 def batch_to_labels(batch_logits):
-    return torch.tensor([extract_max(logits) for logits in batch_logits])
+    return torch.tensor([preds_to_label_idx(logits).tolist() for logits in batch_logits.squeeze()])
