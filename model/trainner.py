@@ -2,7 +2,7 @@ from preprocess_dataset import NERDataset
 from torch.utils.data import DataLoader
 from datasets import load_dataset
 
-from utils import batch_to_labels
+from utils import batch_to_labels, batch_f1
 
 import torch
 import numpy as np
@@ -31,7 +31,8 @@ class Trainner:
         self.model.train() # set model for training mode
 
         losses = []
-
+        f1_l = []
+        temp_f1 = []
         correct_predictions = 0
         temp_accuracy = 0
 
@@ -44,8 +45,9 @@ class Trainner:
             target = sample["targets"].to(self.dev, dtype = torch.long)
 
             out = self.model(input_tensor, att_mask, labels=target)
-            #logits = out['logits']
+            logits = out['logits']
             loss = out['loss']
+            f1 = batch_f1(true=target, logits=logits)
 
             # Creates boolean vector for every relevant value
             #active_accuracy = target.view(-1) != -100
@@ -67,7 +69,8 @@ class Trainner:
             #temp_accuracy += correct_predictions
 
             losses.append(loss.item())
-            
+            f1_l.append(f1)
+            temp_f1.append(f1)
             # Gradient clipping
             torch.nn.utils.clip_grad_norm_(
                parameters=self.model.parameters(), max_norm=10
@@ -75,21 +78,16 @@ class Trainner:
 
 
             # Backward pass
-            self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
+            self.optimizer.zero_grad()
 
             # We print the results every 100 mini batches
             if (idx % debug_ammount == 0):
-                #temp_accuracy /= temp_relevant_data
-                #temp_relevant_data = 0
-
-                #acc = correct_predictions / (self.num_examples * self.batch_len )
-                #acc = "{:.4f}".format(temp_accuracy*100)
                 prog = "{:.2f}".format(100*idx/len(self.dataLoader))
-                #print(f"Iteração {idx} -------- Acuracia nos ultimos {debug_ammount} exemplos: {acc}%------- Loss: {loss} ------ Progresso: {prog}%.")
-                print(f"Iteração {idx} -------- Loss: {loss} ------ Progresso: {prog}%.")
-        return losses, 0
+                print(f"Iteração {idx} -------- Loss: {loss} f1 nas ultimas {debug_ammount} iterações: {np.sum(temp_f1)/debug_ammount} ------ Progresso: {prog}%.")
+                temp_f1 = []
+        return losses, f1_l
 
     def train(self):
         loss_total = []
@@ -99,7 +97,7 @@ class Trainner:
             print(f"-------Fim da epoch nº {idx+1}. Loss media da epoch: {np.mean(losses)}")
             loss_total.append(losses)
         print(f"FIM DO TREINO! Loss media ao fim de {idx+1} epochs: {np.mean(loss_total)}")
-        return loss_total, acc
+        return loss_total, f1
 def main():
 
     BATCH_SIZE = 16
