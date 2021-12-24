@@ -1,8 +1,9 @@
 from preprocess_dataset import NERDataset
 from torch.utils.data import DataLoader
+from torch.nn import CrossEntropyLoss as CEL
 from datasets import load_dataset
 
-from utils import batch_to_labels, batch_f1
+from utils import batch_to_labels, batch_f1, ignore_masked_tokens
 
 import torch
 import numpy as np
@@ -38,17 +39,22 @@ class Trainner:
 
         relevant_data = temp_relevant_data = 0
         debug_ammount = 100
+        l_func = CEL()
         for idx, sample in enumerate(self.dataLoader):
 
             input_tensor = sample["input_ids"].squeeze().to(self.dev, dtype = torch.long)
             att_mask = sample["attention_mask"].to(self.dev, dtype = torch.long)
             target = sample["targets"].to(self.dev, dtype = torch.long)
 
-            out = self.model(input_tensor, att_mask, labels=target)
+            out = self.model(input_tensor, att_mask)
             logits = out['logits']
-            loss = out['loss']
-            f1 = batch_f1(true=target, logits=logits)
+            
+            pred = batch_to_labels(logits)
+            relevant_pred, relevant_label = ignore_masked_tokens(preds=pred, labels=target)
 
+            loss = l_func(relevant_pred, relevant_label)
+            f1 = batch_f1(true=target, logits=logits)
+            
             # Creates boolean vector for every relevant value
             #active_accuracy = target.view(-1) != -100
             #flat_targets = target.view(-1)
