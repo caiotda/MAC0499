@@ -29,12 +29,20 @@ def f1_score(true, pred, average='weighted'):
     """
     assert type(pred) == torch.Tensor
     assert type(true) == torch.Tensor
-    print(pred.shape)
-    print(true.shape)
     assert pred.shape == true.shape
     
     return f1(true, pred, average=average)
 
+def ignore_masked_tokens(preds, labels):
+    """
+    Given a array of predictions and labels, remove the entries that should be
+    ignored.
+    """
+    mask = torch.tensor(list(map(lambda i: True if i != -100 else False, labels)))
+    relevant_preds = torch.masked_select(preds, mask)
+    relevant_labels = torch.masked_select(labels, mask)
+    
+    return relevant_preds, relevant_labels
 def batch_f1(true, logits, average='weighted'):
     """
     Given a batch of logits and labels, calculates the f1 score in the batch.
@@ -44,11 +52,9 @@ def batch_f1(true, logits, average='weighted'):
     pred = batch_to_labels(logits)
     true = true.cpu().view(-1)
     pred = pred.cpu().view(-1)
+
     
-    mask = torch.tensor(list(map(lambda i: True if i != -100 else False, true)))
-    
-    relevant_preds = torch.masked_select(pred, mask)
-    relevant_labels = torch.masked_select(true, mask)
+    relevant_preds, relevant_labels = ignore_masked_tokens(preds=pred, labels=true)
     
     assert relevant_labels.shape == relevant_preds.shape
     
