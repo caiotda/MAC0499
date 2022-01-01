@@ -16,7 +16,7 @@ class Trainner:
     # TODO: batch_size como parametro do construtor?
     # Uma alternativa é passar um dicionario com alguns parametros
     # de treino também.
-    def __init__(self, device, dataLoader, model, optimizer, num_examples, max_len, num_epochs):
+    def __init__(self, device, dataLoader, model, optimizer, num_examples, max_len, num_epochs, evaluator):
         self.model = model.to(device)
         self.dataLoader = dataLoader
         self.optimizer = optimizer
@@ -24,6 +24,7 @@ class Trainner:
         self.batch_len = max_len
         self.num_examples = num_examples
         self.epochs = num_epochs
+        self.evaluate = evaluator.evaluate
         #self.total_steps = len(dataLoader) * epochs
 
     def _train_epoch(self):
@@ -90,14 +91,23 @@ class Trainner:
         return losses, f1_l
 
     def train(self):
-        loss_total = []
+        losses_t_total = []
+        losses_e_total = []
+        f1_t_total = []
+        f1_e_total = []
         for idx in range(self.epochs):
             print(f"----------Começando treino da epoch nº {idx+1}")
-            losses, acc = self._train_epoch() # Eventualmente vou iterar pelas epochs
-            print(f"-------Fim da epoch nº {idx+1}. Loss media da epoch: {np.mean(losses)}")
-            loss_total.append(losses)
-        print(f"FIM DO TREINO! Loss media ao fim de {idx+1} epochs: {np.mean(loss_total)}")
-        return loss_total, f1
+            losses_t, f1_t = self._train_epoch() # Eventualmente vou iterar pelas epochs
+            losses_e, f1_e = self.evaluate()
+            print(f"-------Fim da epoch nº {idx+1}")
+            print(f"Dados de treino: Loss media da epoch: {np.mean(losses_t)}; f1 medio da epoch: {np.mean(f1_t)}")
+            print(f"Dados de avaliação: Loss media da epoch: {np.mean(losses_e)}; f1 medio da epoch: {np.mean(f1_e)}")
+            losses_t_total.extend(losses_t)
+            losses_e_total.extend(losses_e)
+            f1_e_total.extend(f1_e)
+            f1_t_total.extend(f1_t)
+        print(f"FIM DO TREINO! f1 media de treino ao fim de {idx+1} epochs: {np.mean(f1_t_total)}")
+        return losses_t_total, losses_e_total, f1_e_total, f1_t_total
 def main():
 
     BATCH_SIZE = 16
