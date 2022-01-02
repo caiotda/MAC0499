@@ -91,6 +91,7 @@ class Trainner:
         return losses, f1_l
 
     def train(self):
+        print("Começando treino! Essa função retorna a media de f1 e loss em cada epoch de treino e avaliação")
         losses_t_total = []
         losses_e_total = []
         f1_t_total = []
@@ -102,10 +103,10 @@ class Trainner:
             print(f"-------Fim da epoch nº {idx+1}")
             print(f"Dados de treino: Loss media da epoch: {np.mean(losses_t)}; f1 medio da epoch: {np.mean(f1_t)}")
             print(f"Dados de avaliação: Loss media da epoch: {np.mean(losses_e)}; f1 medio da epoch: {np.mean(f1_e)}")
-            losses_t_total.extend(losses_t)
-            losses_e_total.extend(losses_e)
-            f1_e_total.extend(f1_e)
-            f1_t_total.extend(f1_t)
+            losses_t_total.append(np.mean(losses_t))
+            losses_e_total.append(np.mean(losses_e))
+            f1_e_total.append(np.mean(f1_e))
+            f1_t_total.append(np.mean(f1_t))
         print(f"FIM DO TREINO! f1 media de treino ao fim de {idx+1} epochs: {np.mean(f1_t_total)}")
         return losses_t_total, losses_e_total, f1_e_total, f1_t_total
 def main():
