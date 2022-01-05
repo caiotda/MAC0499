@@ -47,4 +47,9 @@ class Evaluator:
                         prog = "{:.2f}".format(100*idx/len(self.eval_dataset))
                         print(f"Iteração {idx} -------- Loss: {loss} f1 nas ultimas {debug_ammount} iterações: {np.sum(temp_f1)/debug_ammount} ------ Progresso: {prog}%.")
                         temp_f1 = []
+        del out
+        del loss
+        del f1
+        del logits
+        torch.cuda.empty_cache()
         return losses, f1_l

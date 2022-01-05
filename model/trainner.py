@@ -88,6 +88,10 @@ class Trainner:
                 prog = "{:.2f}".format(100*idx/len(self.dataLoader))
                 print(f"Iteração {idx} -------- Loss: {loss} f1 nas ultimas {debug_ammount} iterações: {np.sum(temp_f1)/debug_ammount} ------ Progresso: {prog}%.")
                 temp_f1 = []
+        del loss
+        del logits
+        del out
+        torch.cuda.empty_cache()
         return losses, f1_l
 
     def train(self):
@@ -99,6 +103,7 @@ class Trainner:
         for idx in range(self.epochs):
             print(f"----------Começando treino da epoch nº {idx+1}")
             losses_t, f1_t = self._train_epoch() # Eventualmente vou iterar pelas epochs
+            print(f"----------Fim do treino. Iniciando avaliação!")
             losses_e, f1_e = self.evaluate()
             print(f"-------Fim da epoch nº {idx+1}")
             print(f"Dados de treino: Loss media da epoch: {np.mean(losses_t)}; f1 medio da epoch: {np.mean(f1_t)}")
